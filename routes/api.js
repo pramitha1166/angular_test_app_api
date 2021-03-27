@@ -2,6 +2,7 @@ const express = require('express');
 const userModel = require('../model/user.model');
 const jwt = require('jsonwebtoken');
 const studentModel = require('../model/student.model');
+const { query } = require('express');
 const router = express.Router();
 
 
@@ -29,15 +30,30 @@ router.post('/register', (req,res) => {
     const userData = req.body;
     const user = new userModel(userData);
 
-    user.save((err, registeredUser) => {
-        if(err) {
-            console.error(err)
-        } else {
-            let payload = { subject: registeredUser._id }
-            let token = jwt.sign(payload, 'secretkey')
-            res.status(200).send({token})
-        }
-    })
+     userModel.findOne({email:userData.email}, (err,data) => {
+         if(err){
+             res.sendStatus(403)
+         }else {
+            if(data) {
+                res.sendStatus(403)
+            }else {
+                user.save((err, registeredUser) => {
+                    if(err) {
+                        console.error(err)
+                    } else {
+                        let payload = { subject: registeredUser._id }
+                        let token = jwt.sign(payload, 'secretkey')
+                        res.status(200).send({token})
+                    }
+                })
+            }
+         }
+         
+     })
+
+    
+
+  
 })
 
 router.post('/login', (req,res) => {
